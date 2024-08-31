@@ -5,7 +5,16 @@ import time
 import datetime
 from bs4 import BeautifulSoup
 
+###NOTE: to run this script, you need to do the following steps:
+#1) create working_files directory next to script
+#2) log in to connectcarolina on Chromium (or use an existing session)
+#3) go to course search, and press F12 to open developer tools. Click on network tab
+#4) select the current term on the term dropdown at the top of the search.
+#5) right click on the resulting POST request and select copy as curl. 
+#6) paste contents into COMP_search_curl.sh in SAME DIRECTORY as script
+### you can also call the repeat.sh script to have this script run in a loop
 
+#fails if there are too many results
     
 def getColoredTD(enrollmentFractionString):
     nums = enrollmentFractionString.split('/')
@@ -20,7 +29,7 @@ def getColoredTD(enrollmentFractionString):
         tdString = "<td style='color:red'>"
     return tdString
 
-#switch string from open/total format to enrollment/total format
+#SET UP CHROMIUM OR IT WILL GIVE SO MANY BUGS 
 def correctEnrollment(enrollmentString):
     nums = enrollmentString.split('/')
     if len(nums) < 2:
@@ -47,7 +56,7 @@ def getContentById(targetId, data):
         print("couldn't find match for id "+targetId+"!\n")
     
     soup = BeautifulSoup(relevantData, 'html.parser')
-    if targetId == "MTG_INSTR$0":
+    if targetId == "DERIVED_CSLRCH":
         retString = str(soup.find(id=targetId).get_text()).replace(",", ",<br />")
     elif targetId == "DERIVED_CLSRCH_SSR_CLASSNOTE_LONG":
         #print(relevantData+"\n")
@@ -56,17 +65,6 @@ def getContentById(targetId, data):
         retString = str(soup.find(id=targetId).string).replace(u'\xa0', u'&nbsp;')
     
     return retString
-    
-#bigState 0 is normal dept, 1 is first part of big dept, 2 is second part of big dept
-def makeDeptQuery(term, stateNum, ICSID, dept, bigState, cutoff = 500):
-    number = 999
-    matchDirection = "T"
-    if bigState != 0:
-        number = cutoff
-    if bigState == 2:
-        matchDirection = "G"
-    queryString = "  --data-raw 'ICAJAX=1&ICNAVTYPEDROPDOWN=1&ICType=Panel&ICElementNum=0&ICStateNum="+str(stateNum)+"&ICAction=CLASS_SRCH_WRK2_SSR_PB_CLASS_SRCH&ICModelCancel=0&ICXPos=0&ICYPos=0&ResponsetoDiffFrame=-1&TargetFrameName=None&FacetPath=None&ICFocus=&ICSaveWarningFilter=0&ICChanged=-1&ICSkipPending=0&ICAutoSave=0&ICResubmit=0&ICSID="+ICSID+"&ICActionPrompt=false&ICPanelName=&ICFind=&ICAddCount=&ICAppClsData=&CLASS_SRCH_WRK2_INSTITUTION$31$=UNCCH&CLASS_SRCH_WRK2_STRM$35$="+term+"&NC_CSE_ATTR_TBL_CRSE_ATTR_VALUE$0=&SSR_CLSRCH_WRK_SUBJECT$0="+dept+"&SSR_CLSRCH_WRK_SSR_EXACT_MATCH1$1="+matchDirection+"&SSR_CLSRCH_WRK_CATALOG_NBR$1="+str(number)+"&SSR_CLSRCH_WRK_ACAD_CAREER$2=&SSR_CLSRCH_WRK_SSR_OPEN_ONLY$chk$3=N&SSR_CLSRCH_WRK_SSR_START_TIME_OPR$4=GE&SSR_CLSRCH_WRK_MEETING_TIME_START$4=&SSR_CLSRCH_WRK_SSR_END_TIME_OPR$4=LE&SSR_CLSRCH_WRK_MEETING_TIME_END$4=&SSR_CLSRCH_WRK_INCLUDE_CLASS_DAYS$5=J&SSR_CLSRCH_WRK_MON$chk$5=Y&SSR_CLSRCH_WRK_MON$5=Y&SSR_CLSRCH_WRK_TUES$chk$5=Y&SSR_CLSRCH_WRK_TUES$5=Y&SSR_CLSRCH_WRK_WED$chk$5=Y&SSR_CLSRCH_WRK_WED$5=Y&SSR_CLSRCH_WRK_THURS$chk$5=Y&SSR_CLSRCH_WRK_THURS$5=Y&SSR_CLSRCH_WRK_FRI$chk$5=Y&SSR_CLSRCH_WRK_FRI$5=Y&SSR_CLSRCH_WRK_SAT$chk$5=Y&SSR_CLSRCH_WRK_SAT$5=Y&SSR_CLSRCH_WRK_SUN$chk$5=Y&SSR_CLSRCH_WRK_SUN$5=Y&SSR_CLSRCH_WRK_SSR_EXACT_MATCH2$6=B&SSR_CLSRCH_WRK_LAST_NAME$6=&SSR_CLSRCH_WRK_DESCR$7=&SSR_CLSRCH_WRK_CLASS_NBR$8=&SSR_CLSRCH_WRK_SSR_UNITS_MIN_OPR$9=GE&SSR_CLSRCH_WRK_UNITS_MINIMUM$9=&SSR_CLSRCH_WRK_SSR_UNITS_MAX_OPR$9=LE&SSR_CLSRCH_WRK_UNITS_MAXIMUM$9=&SSR_CLSRCH_WRK_SSR_COMPONENT$10=&SSR_CLSRCH_WRK_SESSION_CODE$11=&SSR_CLSRCH_WRK_INSTRUCTION_MODE$12=&SSR_CLSRCH_WRK_CAMPUS$13=' \\"
-    return queryString
 
 #extract class list(s)
 def createSearchCommand(term, state, dept, splitSearch, ICSID, cutoff = 500):
@@ -193,23 +191,7 @@ def addClassEntry(state, dept_search_file, ICSID, i):
         
 
 
-    unresNums = unresEnrollmentString.split('/')
-    resNums = resEnrollmentString.split('/')
-    filledSeats = 0
-    if unresEnrollmentString == "Seats filled" and resEnrollmentString == "Seats filled":
-        filledSeats = int(totalSeatsString)
-    elif unresEnrollmentString != "Seats filled" and resEnrollmentString == "Seats filled":
-        filledSeats = int(totalSeatsString) - (int(unresNums[1]) - int(unresNums[0]))
-    elif unresEnrollmentString == "Seats filled" and resEnrollmentString != "Seats filled":
-        filledSeats = int(totalSeatsString) - (int(resNums[1]) - int(resNums[0]))
-    else:
-        filledSeats = int(unresNums[0]) + int(resNums[0])
-
-    totalEnrollmentString = str(filledSeats) + "/" + totalSeatsString
-	
-	
-
-    totalEnrollmentTD = getColoredTD(totalEnrollmentString)
+    # changed this but might not work on your machine 
     waitlistTD = getColoredTD(waitlistString)
 
     tableLines = "<tr><td>"+classNum+"</td><td>"+className+"</td><td>"+classTime+"</td><td>"+instructor+"</td><td>"+room+"</td><td>"+unresEnrollmentString+"</td><td>"+resEnrollmentString+"</td>"+totalEnrollmentTD+totalEnrollmentString+"</td>"+waitlistTD+waitlistString+"</td></tr>\n<tr class='expandable'><td colspan=7><strong>Description: </strong>"+description+" "+units+"."
@@ -218,7 +200,7 @@ def addClassEntry(state, dept_search_file, ICSID, i):
 
     return tableLines
 
-term_list = ["fall 2024"]
+term_list = ["fall 2023"]
 term_folder_list = ["fall2024"]
 term_query_string_list = ["2249"]
 numTerms = len(term_list)
@@ -227,7 +209,6 @@ termCounter = 0
 dept_search_file = "COMP_search_curl.sh"
 
 #extract ICSID from the curl used for the search
-dept_search = open(dept_search_file, "r").read().splitlines()
 dept_search_data = dept_search[-1]
 start_ICSID = dept_search_data.find("ICSID=")
 end_ICSID = dept_search_data.find("&", start_ICSID)
@@ -235,7 +216,7 @@ ICSID = dept_search_data[start_ICSID+6: end_ICSID]
 print("retrieved ICSID "+ICSID+"\n")
 #extract state number from the curl used for the search
 start_state = dept_search_data.find("ICStateNum=")
-end_state = dept_search_data.find("&", start_state)
+end_state = dept_search_data.find("&", end_ICSID)
 stateNum = int(dept_search_data[start_state+11:end_state])
 print("retrieved ICStateNum "+str(stateNum)+"\n")
 
@@ -341,8 +322,43 @@ while termCounter < numTerms:
         outFile.close()
 
         print("done with "+dept+"!")
+    
+    def start_class_list2(dept_search_file):
+    logging.basicConfig(level=logging.INFO)
+    max_retries = 3
+    retry_count = 0
+    num_classes = 0
+    class_list_data = ""
+
+    while retry_count < max_retries:
+        try:
+            # Run the bash script and capture output THIS IS WHAT I ADDED 
+            result = subprocess.run(["bash", dept_search_file], capture_output=True, text=True, check=True)
+            class_list_data = result.stdout
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Error executing script: {e}")
+            time.sleep(1)
+            retry_count += 1
+            continue
+        
+        # Extract number of classes
+        match = re.search(r"(\d+)\s+class section\(s\) found", class_list_data)
+        if match:
+            num_classes = int(match.group(1))
+            logging.info(f"Number of classes: {num_classes}")
+            if num_classes > 0:
+                return num_classes
+        
+        # If no classes or data issue, retry
+        logging.info("No classes found or data issue, retrying...")
+        time.sleep(1)
+        retry_count += 1
+    
+    logging.error("Failed to retrieve class list after several attempts.")
+    return num_classes
 
     termCounter += 1
     print("done with term "+term+"!\n")
+    
 
 print("done!")
