@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 
 #fails if there are too many results
 
-#test
+
     
 def getColoredTD(enrollmentFractionString):
     nums = enrollmentFractionString.split('/')
