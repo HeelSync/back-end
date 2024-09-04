@@ -16,6 +16,8 @@ from bs4 import BeautifulSoup
 ### you can also call the repeat.sh script to have this script run in a loop
 
 #fails if there are too many results
+
+#test
     
 def getColoredTD(enrollmentFractionString):
     nums = enrollmentFractionString.split('/')
@@ -178,15 +180,17 @@ def addClassEntry(state, dept_search_file, ICSID, i):
     totalSeatsString = getContentById("NC_RC_OPEX_WRK_DESCR1$2", classRawData)
     description = getContentById("DERIVED_CLSRCH_DESCRLONG", classRawData)
     units = getContentById("SSR_CLS_DTL_WRK_UNITS_RANGE", classRawData)
-    #I will do this for every other department (or we might not even need it?)
+    #I will do this for every other department (or we might not even need it? 
     if "COMP" in className and ("89 -" in className or "590 -" in className or "790 -" in className):
         notes = getContentById("DERIVED_CLSRCH_SSR_CLASSNOTE_LONG", classRawData)
         #get the desired title
         specialTitleStart = notes.find("TITLE:") + 7
-        specialTitleEnd = notes.find('\n')
-    if specialTitleStart != 6: 
+        specialTitleEnd = notes.find('\n')#getContentById makes sure it always ends with a \n
+        #print(notes+"\n"+str(specialTitleStart)+" "+str(specialTitleEnd))
+    if specialTitleStart != 6:#if we didn't find TITLE:
         genericTitleStart = className.find("Topics in Computer Science")
         className = className[:genericTitleStart] +"Special Topics: "+ notes[specialTitleStart:specialTitleEnd]
+
         
 
     #get the total enrollment
@@ -242,6 +246,7 @@ end_state = dept_search_data.find("&", start_state)
 stateNum = int(dept_search_data[start_state+11:end_state])
 print("retrieved ICStateNum "+str(stateNum)+"\n")
 
+#Complicated Code, Rather not touch 
 while termCounter < numTerms:
 
     term = term_list[termCounter]
@@ -339,6 +344,6 @@ while termCounter < numTerms:
 
     termCounter += 1
     print("done with term "+term+"!\n")
-    #Delted Function -- will add later when classes start showing up again 
+    #Deleted Function -- will add later when classes start showing up again 
 
 print("done!")
