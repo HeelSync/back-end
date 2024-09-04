@@ -1,0 +1,1 @@
+lick on the resulting POST request and select copy as curl.
