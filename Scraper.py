@@ -16,6 +16,8 @@ from bs4 import BeautifulSoup
 ### you can also call the repeat.sh script to have this script run in a loop
 
 #fails if there are too many results
+
+#test
     
 def getColoredTD(enrollmentFractionString):
     nums = enrollmentFractionString.split('/')
